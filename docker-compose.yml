@@ -1,0 +1,15 @@
+services:
+  testbed:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+    container_name: qos-testbed
+    privileged: true
+    network_mode: host
+    pid: host
+    volumes:
+      - .:/app
+      - /lib/modules:/lib/modules:ro
+    working_dir: /app
+    stdin_open: true
+    tty: true
