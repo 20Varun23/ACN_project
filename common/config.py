@@ -49,3 +49,17 @@ CONTROLLER_PORT = 6633
 # Monitoring
 SAMPLE_INTERVAL_S = 1.0
 RESULTS_DIR = "results"
+
+# Congestion detection (Stream C). Baseline RTT is ~2x one-way delay.
+CONGESTION_UTIL_THRESHOLD = 0.85            # fraction of bottleneck capacity
+CONGESTION_RTT_MS = 4 * BOTTLENECK_DELAY_MS  # VoIP RTT above this = congested
+CLEAR_HOLD_TICKS = 3                         # samples below threshold before "clear"
+
+# Adaptive policy (Stream B). Rates in bits/s.
+ADAPTIVE = {
+    "bulk_floor": 500_000,          # never starve bulk completely
+    "bulk_shrink_factor": 0.5,      # per congested tick
+    "bulk_restore_step": 1_000_000, # per clear tick
+    "voip_protect_min": 1_000_000,
+    "video_protect_min": 5_000_000,
+}

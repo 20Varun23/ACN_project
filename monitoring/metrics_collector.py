@@ -43,6 +43,7 @@ class MetricsCollector:
     def __init__(self, net, run_dir):
         self.net = net
         self.path = os.path.join(run_dir, "samples.csv")
+        self.latest = None  # most recent sample dict, read by the adaptive manager
         self._stop = threading.Event()
         self._thread = threading.Thread(target=self._loop, daemon=True)
 
@@ -57,14 +58,32 @@ class MetricsCollector:
         senders = {name: self.net.get(name) for name in cfg.SENDER_IPS}
         s1 = self.net.get("s1")
         t0 = time.time()
+        prev_q, prev_t = None, None
         with open(self.path, "w", newline="") as f:
             w = csv.writer(f)
             w.writerow(["t", "voip_rtt_ms", "video_rtt_ms", "bulk_rtt_ms",
-                        "q0_tx_bytes", "q1_tx_bytes", "q2_tx_bytes"])
+                        "q0_tx_bytes", "q1_tx_bytes", "q2_tx_bytes",
+                        "q0_mbps", "q1_mbps", "q2_mbps", "total_mbps"])
             while not self._stop.is_set():
+                t = round(time.time() - t0, 2)
                 rtts = [_rtt(senders[n]) for n in ("voip", "video", "bulk")]
                 q = _queue_bytes(s1)
-                w.writerow([round(time.time() - t0, 2), *rtts,
-                            q.get(0, 0), q.get(1, 0), q.get(2, 0)])
+                qb = [q.get(i, 0) for i in (0, 1, 2)]
+
+                mbps = [0.0, 0.0, 0.0]
+                if prev_q is not None and t > prev_t:
+                    mbps = [(b - pb) * 8 / (t - prev_t) / 1e6 for b, pb in zip(qb, prev_q)]
+                prev_q, prev_t = qb, t
+
+                row = [t, *rtts, *qb, *mbps, sum(mbps)]
+                w.writerow(row)
                 f.flush()
+                self.latest = {
+                    "t": t,
+                    "voip_rtt_ms": rtts[0],
+                    "video_rtt_ms": rtts[1],
+                    "bulk_rtt_ms": rtts[2],
+                    "q_mbps": {0: mbps[0], 1: mbps[1], 2: mbps[2]},
+                    "total_mbps": sum(mbps),
+                }
                 self._stop.wait(cfg.SAMPLE_INTERVAL_S)
