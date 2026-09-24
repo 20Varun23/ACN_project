@@ -99,11 +99,11 @@ head results/<run>/samples.csv
 * The container needs `--privileged` and host networking (set in
   `docker-compose.yml`) because Mininet creates network namespaces and OVS
   talks to the kernel datapath.
-* Ryu is unmaintained upstream; the pinned `eventlet==0.30.2` /
-  `dnspython==1.16.0` are the versions it still runs against.
-* OVS re-applies HTB class rates as soon as a queue's `other-config` row
-  changes, so `qos_setup.update_queue()` takes effect within a sample
-  interval without touching existing flows.
-* The adaptive manager runs in-process with the scenario (not inside Ryu)
-  because it needs `ovs-vsctl` in the root namespace and the live sample
-  stream; the Ryu app only steers flows into queues.
+* **Do not bump the base image past Ubuntu 20.04.** Ryu is unmaintained
+  (last release 2019) and does not run on Python 3.10+: `eventlet==0.30.2`
+  fails on 3.10's immutable `TimeoutError`, `dnspython==1.16.0` uses
+  `collections.MutableMapping` (removed in 3.10), and upgrading either one
+  breaks `ryu/app/wsgi.py`, which imports `eventlet.wsgi.ALREADY_HANDLED`.
+  Python 3.8 on 20.04 is the combination Ryu actually works with.
+* Phase 2 (adaptive manager) will reuse `qos_setup.update_queue()` and the
+  live `samples.csv` stream as its congestion signal.

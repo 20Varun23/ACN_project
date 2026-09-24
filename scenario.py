@@ -54,7 +54,7 @@ def run(mode, t_cong, t_end, tag=""):
     gen.start_servers(server, run_dir)
     time.sleep(1)
 
-    collector = MetricsCollector(net, run_dir)
+    collector = MetricsCollector(net, run_dir, port)
     collector.start()
 
     manager = None

@@ -52,3 +52,4 @@ def start_bulk(host, run_dir, duration):
 def stop_all(net):
     for h in net.hosts:
         h.cmd("pkill -f iperf3")
+        h.cmd("pkill -f 'ping -n'")
