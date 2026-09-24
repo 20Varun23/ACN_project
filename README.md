@@ -61,7 +61,11 @@ head results/<run>/samples.csv
 * The container needs `--privileged` and host networking (set in
   `docker-compose.yml`) because Mininet creates network namespaces and OVS
   talks to the kernel datapath.
-* Ryu is unmaintained upstream; the pinned `eventlet==0.30.2` /
-  `dnspython==1.16.0` are the versions it still runs against.
+* **Do not bump the base image past Ubuntu 20.04.** Ryu is unmaintained
+  (last release 2019) and does not run on Python 3.10+: `eventlet==0.30.2`
+  fails on 3.10's immutable `TimeoutError`, `dnspython==1.16.0` uses
+  `collections.MutableMapping` (removed in 3.10), and upgrading either one
+  breaks `ryu/app/wsgi.py`, which imports `eventlet.wsgi.ALREADY_HANDLED`.
+  Python 3.8 on 20.04 is the combination Ryu actually works with.
 * Phase 2 (adaptive manager) will reuse `qos_setup.update_queue()` and the
   live `samples.csv` stream as its congestion signal.

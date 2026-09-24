@@ -48,7 +48,7 @@ def run(mode, t_cong, t_end):
     gen.start_servers(server, run_dir)
     time.sleep(1)
 
-    collector = MetricsCollector(net, run_dir)
+    collector = MetricsCollector(net, run_dir, port)
     collector.start()
 
     gen.start_voip(net.get("voip"), run_dir, t_end)
